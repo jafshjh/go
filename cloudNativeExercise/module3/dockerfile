@@ -1,0 +1,39 @@
+ubuntu@VM-0-117-ubuntu:/data/hj/homework/module3/httpserver$ cat Dockerfile 
+FROM golang:1.17 AS builder
+
+ENV GO111MODULE=off \   
+    CGO_ENABLED=0 \     
+    GOOS=linux \
+    GOARCH=amd64
+
+WORKDIR /build
+COPY ./main.go .
+RUN go build -o gohttpserver .
+
+FROM scratch
+COPY --from=builder /build/gohttpserver /
+EXPOSE 29010
+ENTRYPOINT ["/gohttpserver"]
+
+ubuntu@VM-0-117-ubuntu:/data/hj/homework/module3/httpserver$ ls -l
+total 12
+drwxr-xr-x 2 root   root   4096 Jan 16 22:49 build
+-rw-r--r-- 1 root   root    267 Jan 16 22:50 Dockerfile
+-rw-rw-r-- 1 ubuntu ubuntu 2208 Jan 16 22:29 main.go
+
+ubuntu@VM-0-117-ubuntu:/data/hj/homework/module3/httpserver$ docker images |head -4
+REPOSITORY                                                        TAG              IMAGE ID       CREATED          SIZE
+gohttpserver                                                      0.1              2e5432b5bc9a   3 minutes ago    6.08MB
+<none>                                                            <none>           133b39b46373   3 minutes ago    962MB
+
+ubuntu@VM-0-117-ubuntu:/data/hj/homework/module3/httpserver$ PID=$(docker inspect --format "{{ .State.Pid }}" agitated_lewin)
+ubuntu@VM-0-117-ubuntu:/data/hj/homework/module3/httpserver$ sudo nsenter -t $PID -n ip a
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+243: eth0@if244: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default 
+    link/ether 02:42:ac:11:00:02 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+    inet 172.17.0.2/16 brd 172.17.255.255 scope global eth0
+       valid_lft forever preferred_lft forever
+ubuntu@VM-0-117-ubuntu:/data/hj/homework/module3/httpserver$
